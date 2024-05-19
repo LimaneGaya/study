@@ -1,3 +1,3 @@
 # flutter_animated_responsive_layout
 
-A new Flutter project.
+Project following [Google Codelab](https://codelabs.developers.google.com/codelabs/flutter-animated-responsive-layout)
