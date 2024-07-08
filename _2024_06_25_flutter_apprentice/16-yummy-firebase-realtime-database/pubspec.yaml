@@ -1,0 +1,32 @@
+name: yummy
+description: Yummy is a food platform for customers to order food from a wide variety of restaurants
+
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.5 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  intl: ^0.19.0
+
+  flutter_riverpod: ^2.4.5
+  firebase_auth: ^5.1.1
+  firebase_core: ^3.1.1
+  cloud_firestore: ^5.0.2
+
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
+    - assets/categories/
+    - assets/restaurants/
+    - assets/profile_pics/
+    - assets/food/
