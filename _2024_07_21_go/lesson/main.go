@@ -1,74 +1,57 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"strconv"
-	"unicode/utf8"
 )
 
 func main() {
-	var intNum int8 = 127
-	var intNum2 int16 = 32767
-	var intNum3 int32 = 2147483647
-	var intNum4 int64 = 9223372036854775807
-	var intNum5 int = 2147483647
-	fmt.Println("int8  " + string(intNum))
-	fmt.Println("int16 " + string(intNum2))
-	fmt.Println("int32 " + string(intNum3))
-	fmt.Println("int64 " + string(intNum4))
-	fmt.Println("int   " + string(intNum5))
-	var floatNum float32 = 3.141592653589793
-	var floatNum2 float64 = 3.141592653589793
+	printME("Hello, World!")
 
-	fmt.Println("float32 " + fmt.Sprint(floatNum))
-	fmt.Println("float64 " + strconv.FormatFloat(floatNum2, 'f', -1, 64))
-	//kk
-	var intandfload float64 = float64(intNum) + floatNum2
-	fmt.Println("int and float " + strconv.FormatFloat(intandfload, 'f', -1, 64))
-	// division result is int
-	var intdevint int = int(intNum) / int(intNum2)
-	fmt.Println("int dev int " + string(intdevint))
-	// modulo results in the reminder
-	var intmodint int = int(intNum) % int(intNum2)
-	fmt.Println("int mod int " + string(intmodint))
-	var word string = "hello"
-	fmt.Println(word)
-	var word2 = "world \nHello"
-	fmt.Println(word2)
-	var word3 = `word 
-	Hello`
-	fmt.Println(word3)
-	var word4 = "hello" + "world"
-	fmt.Println(word4)
-	// length in standard alphabet
-	var len int = len("Hellooo")
-	fmt.Println(len)
+	fmt.Println(intDivision(4, 2))
+	var res, rem, err = intDivisionDetailed(4, 0)
+	// If statement
+	if err != nil {
+		fmt.Println(err)
+	} else { // else need to be in the same line as }
+		fmt.Println(res, rem)
+	}
 
-	// length in unicode
-	var len2 int = utf8.RuneCountInString("Helloµ")
-	fmt.Println(len2)
+	var res1, rem1, err1 = intDivisionDetailed(4, 0)
 
-	// runes = char in c#
-	var run rune = 'a'
-	fmt.Println(run) //  >> 97
+	// Switch statement
+	switch {
+	case err1 != nil:
+		fmt.Println(err1)
+	case rem1 == 0:
+		fmt.Printf("Result of the integer division is %v", res1)
+	case rem1 != 0:
+		fmt.Printf("Result of the integer division is %v with reminder %v", res1, rem1)
+	default:
+		fmt.Printf("Result of the integer division is %v with reminder %v", res1, rem1)
 
-	// booleans
-	var boo bool = true
-	fmt.Println(boo)
+	}
 
-	// Constants
-	const cst = "hello"
-	fmt.Println(cst)
+}
 
-	// Constants
-	const cst1 string = "hello"
-	fmt.Println(cst1)
+// Function Declaration
+func printME(s string) { // Curly braces need to be on the same line
+	fmt.Println(s)
+}
 
-	// Variable without var
-	vr := "hello"
-	fmt.Println(vr)
+func intDivision(a int, b int) int { // int is the return type
+	var result int = a / b
+	return result
+}
+func intDivisionDetailed(a int, b int) (int, int, error) { // int is the return type
+	// error is the return type
+	var err error = nil
+	if b == 0 {
+		err = errors.New("cannot divide by zero")
+		return 0, 0, err
+	}
+	var result = a / b
+	var remainder = a % b
 
-	// Multiple variables
-	vr, vr2, vr3 := "hello", "hello2", "hello3"
-	fmt.Println(vr + vr2 + vr3)
+	return result, remainder, err
 }
