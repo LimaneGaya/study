@@ -59,6 +59,54 @@ For lists we use ++ to concatonate two lists
 
 is_list(value) to check if type is list
 
- 
+You cannot access values in list with an index in elixir, it is discouraged to do so.
+To access a value with an index it is possible to use Enum.at(*list*, *index*)
+
+To get help and see the documentation for a module and function we use the h() function.
+t Enum.at // will print the documentation for at function
+
+To ignore value in pattern matching use _:
+[_,_, third] = ["a", "b", "c"]
+
+The function head return the first element:
+hd(list)
+
+The function Tail return the remaining elements:
+tl(list)
+
+[ h | t] = list
+The h is the first element and the t is the rest of the list.
+
+Tuples are initialized like {1,2,3} 
+{a, b} = {1, 2}
+
+Keyword List 
+data =  {a:1, b:2}
+The key is stored as an atom, [{:a, 1}] = {a:1}
+
+Maps:
+my_map = %{a: 1, b: 2, c: 3}
+%{a: first, b: second, c: third} = my_map
+first // return 1
+%{b: se} = my_map
+value can be accessed like my_map.a // returns 1
+if using none atome for key they the declaration should be like 
+map2 = %{"a" => 1, "b" => 3}
+%{"b" => b} = map2 // pattern matching with none atome maps
+map2 = %{map2 | "b" => 4} //updating a value in a none atome map
+my_map = %{my_map | c: 4} //updating a map that uses atoms
+
+Structs:
+To create a sctruct, a module need to be created
+defmodule User do
+    defstruct :username, :email, :age
+    // can be used with parentheses 
+    // defstruct(:username)
+    // can be initialized
+    // defstruct username: "", email: "", age: nil
+end
+Then to create Structs:
+user1 = %User{username: "gaya", age: 27, email: "gaya@gaya.com"}
+user1 = %{user1 | age: 21} // Modify the value of the struct
 
 
