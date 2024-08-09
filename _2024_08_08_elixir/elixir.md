@@ -109,4 +109,52 @@ Then to create Structs:
 user1 = %User{username: "gaya", age: 27, email: "gaya@gaya.com"}
 user1 = %{user1 | age: 21} // Modify the value of the struct
 
+Flow Controle:
+
+Case:
+list= [1,2,3]
+case Enum.at(list, 2) do
+    1 -> "This won't print"
+    3 -> "3 is a match!"
+    _ -> "Catch all"
+end
+defmodule Post do
+    defstruct(
+        id: nil,
+        title: "",
+        description: "",
+        author: ""
+        )
+end
+post1 = %Post{id: 1, title: "Title no 1", author: "julius ceaser"}
+
+case post1 do
+    %{author: "Gaya"} -> "Got a post from Gaya"
+    %{author: "ziad"} -> "Got a post from Ziad"
+    _ -> "Got a post from #{post1.author}"
+end
+
+post1 = %{post1 | author: "Gaya"}
+
+
+Cond:
+
+cond do
+    post1.author == "Gaya" -> "Editing a post from Octallium"
+    post1.author == "Ziad" -> "Editing a post from Ziad"
+    true -> "This is a catch all"
+end
+
+cond do
+    hd(list) == 1 -> "Got a 1"
+    true -> "Head is #{hd(list)}"
+end
+
+if/else: //not used often
+
+if true do
+    "This will fork"
+else
+    "Else this will work"
+end
 
