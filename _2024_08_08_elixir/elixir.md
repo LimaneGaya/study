@@ -158,3 +158,49 @@ else
     "Else this will work"
 end
 
+
+mix new *projectname* // to create a new elixir projectname
+
+To start iex in the project:
+iex -S mix
+
+To create a single line function definition:
+def *functionname*, do:
+ex: def upto(0), do: 0
+
+Tail Recursion:
+  def downto(0), do: 0
+  def downto(num) do
+    IO.puts(num)
+    downto(num - 1)
+  end
+  // 3, 2, 1
+Head Recursion:
+  def upto(0), do: 0
+  def upto(num) do
+    upto(num - 1)
+    IO.puts(num)
+  end
+  // 1, 2, 3
+
+
+lists are linked lists
+
+@moduledoc """
+""" // For documenting module should be below the module declaration
+
+@doc """
+Retturns the sum of the numbers in a List
+""" // Documantation for a function, comes just before the funtion implementation
+
+To specify types for function and return types:
+@spec sum(list(number()), integer()) :: number()
+def sum(nums, s \\ 0) // the \\ are for setting a default value in a function
+
+div() // getting the result of the division as an int
+rem() // getting the reminder of a division
+
+
+
+
+
