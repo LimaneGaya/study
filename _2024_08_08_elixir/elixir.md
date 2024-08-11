@@ -200,6 +200,28 @@ def sum(nums, s \\ 0) // the \\ are for setting a default value in a function
 div() // getting the result of the division as an int
 rem() // getting the reminder of a division
 
+Adding elements to a list is more efficient in the start of a list O(1) instead of the end of the list O(n)
+
+annonimous functions are declared like:
+double = fn x -> x * 2 end
+calling them is done by calling *double.(2)* there has to be a dot
+
+
+The pipe operator *|>* takes the output of a previous funtion and apply it to the next function:
+Lists.map([1,2,3], fn x -> x * 2 end) |> Lists.reverse
+
+[1,2,3,4,5,6] |> Lists.map(fn x -> x * 2 end) |> Enum.reverse // [2, 4, 6, 8, 10, 12]
+
+Adding list together using *++* operator [1,2,3] ++ [4,5,6] // [1,2,3,4,5,6]
+
+Private function are declared with *defp*
+
+@spec func(list(), (any() -> list())) // you can declare anonimous funtions parameter type and return type with (*parameter type* -> *return type*)
+
+
+
+
+
 
 
 
