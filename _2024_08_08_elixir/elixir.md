@@ -219,6 +219,17 @@ Private function are declared with *defp*
 @spec func(list(), (any() -> list())) // you can declare anonimous funtions parameter type and return type with (*parameter type* -> *return type*)
 
 
+in elixir there is a condition check in functions called *Guards* declared like so:
+
+def *fuc*() when *condition*, do: .....
+
+
+
+
+
+
+
+
 
 
 

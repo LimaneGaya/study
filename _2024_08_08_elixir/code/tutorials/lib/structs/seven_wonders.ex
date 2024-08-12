@@ -28,15 +28,19 @@ defmodule Tutorials.Structs.SevenWonders do
   def in_countries_starting_with_i(wonders) do
     Enum.filter(wonders, fn %{country: count} -> String.starts_with?(count, "i") end) |> print_names
   end
+  @spec sort_by_country_length(list(t())) :: list()
   def sort_by_country_length(wonders) do
     wonders |> Enum.sort(fn x, y -> String.length(x.country) < String.length(y.country) end)
   end
+  @spec name_country_list(list(t())) :: list()
   def name_country_list(wonders) do
-    Enum.reduce(wonders, [], fn x, acc ->[[x.name, x.country] | acc] end)
+    Enum.reduce(wonders, [], fn x, acc -> [[x.name, x.country] | acc] end)
   end
+  @spec country_name_keyword_list(list(t())) :: list()
   def country_name_keyword_list(wonders) do
     Enum.reduce(wonders, [], fn wonder, acc -> [{String.to_atom(wonder.country), wonder.name} | acc] end)
   end
+  @spec all_names(list(t())) :: any()
   def all_names(wonders) do
     for %{name: name} <- wonders, do: name
   end
