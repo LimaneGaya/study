@@ -1,18 +1,9 @@
 defmodule Stats do
-  @moduledoc """
-  Documentation for `Stats`.
-  """
+  alias Stats.Central.{Mean, Median, Mode}
 
-  @doc """
-  Hello world.
+  #def population_mean(nums), do: Mean.population_mean(nums)
+  defdelegate population_mean(nums), to: Mean
+  defdelegate median(nums), to: Median
+  defdelegate mode(nums), to: Mode
 
-  ## Examples
-
-      iex> Stats.hello()
-      :world
-
-  """
-  def hello do
-    :world
-  end
 end

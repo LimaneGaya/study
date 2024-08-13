@@ -1,3 +1,6 @@
+From [youtube](youtu.be/IiIgm_yaoOA)
+
+
 Elixir types are all immutable.
 
 You can run interactive mode of elixir with iex in terminal.
