@@ -1,0 +1,252 @@
+<!-- livebook:{"autosave_interval_s":60} -->
+
+# Elixir 2024_08_22
+
+## Collectable
+
+```elixir
+for x <- 1..3, y <- 1..3, do: {x, y, x*y}
+```
+
+```elixir
+multiplication_table = for x <- 1..9, y <- 1..9, into: %{} do
+  {{x, y}, x*y}
+end
+```
+
+```elixir
+Map.get(multiplication_table, {2,5})
+```
+
+```elixir
+multiplication_table = for x <- 1..9, y <- 1..9, x <= y, into: %{} do
+  {{x, y}, x*y}
+end
+```
+
+## Stream
+
+Stream is a module thats just like Enum but is lazy (operation are done when needed)
+
+```elixir
+employees = ["Alice", "Bob", "John"]
+employees
+|> Stream.with_index()
+|> Enum.each(
+  fn {employee, index} -> IO.puts("#{index + 1}. #{employee}") end
+)
+```
+
+```elixir
+[9, -1, "foo", 25, 49]
+|> Stream.filter(&(is_number(&1) and &1 > 0))
+|> Stream.map(&{&1, :math.sqrt(&1)})
+|> Stream.with_index()
+|> Enum.each(
+  fn {{input, result}, index} 
+    -> IO.puts("#{index + 1}. sqrt(#{input}) = #{result}")
+  end
+)
+```
+
+Stream can generate infite data
+
+```elixir
+natural_numbers = Stream.iterate(1, fn previous -> previous + 1 end )
+Enum.take(natural_numbers, 10)
+```
+
+This takes the input from console
+
+```elixir
+ Stream.repeatedly(fn -> IO.gets("> ") end)
+|> Stream.map(&String.trim_trailing(&1, "\n"))
+|> Enum.take_while(&(&1 != ""))
+```
+
+## Exercises
+
+```elixir
+defmodule Lines do 
+  def lines_lengths!(file) do
+    File.stream!(file)
+    |> Stream.map(&String.trim_trailing(&1, "\n"))
+    |> Enum.map(&String.length(&1))
+  end
+  def longest!(file) do
+    lines_lengths!(file) 
+    |> Enum.max()
+  end
+  def longest_line!(file) do
+    File.stream!(file)
+    |> Stream.map(&String.trim_trailing(&1, "\n"))
+    |> Enum.max_by(&String.length(&1))
+  end
+  def words_per_line!(file) do
+    File.stream!(file)
+    |> Stream.map(&String.trim_trailing(&1, "\n"))
+    |> Stream.map(&String.split(&1)) 
+    |> Enum.map(&length(&1))
+  end
+end
+
+```
+
+```elixir
+Lines.lines_lengths!(
+  "/home/gaya/projects/study/_2024_08_22_elixir/collectable&streams.livemd"
+)
+```
+
+```elixir
+Lines.longest!(
+  "/home/gaya/projects/study/_2024_08_22_elixir/collectable&streams.livemd"
+)
+```
+
+```elixir
+Lines.longest_line!(
+  "/home/gaya/projects/study/_2024_08_22_elixir/collectable&streams.livemd"
+)
+```
+
+```elixir
+Lines.words_per_line!(
+  "/home/gaya/projects/study/_2024_08_22_elixir/collectable&streams.livemd"
+)
+```
+
+## Abstractions
+
+```elixir
+defmodule TodoList do
+  def new(), do: MultiDict.new()
+  def add_entry(todo_list, entry) do
+    MultiDict.add(todo_list, entry.date, entry)
+  end
+  def entries(todo_list, date) do
+    MultiDict.get(todo_list, date)
+  end
+end
+defmodule MultiDict do
+  def new(), do: %{}
+  def add(dict, key, value) do
+    Map.update(dict, key, [value], &[value | &1])
+  end
+  def get(dict, key) do
+    Map.get(dict, key, [])
+  end
+end
+```
+
+```elixir
+todo_list = TodoList.new() |>
+TodoList.add_entry(%{date: ~D[2023-12-19], title: "Dentist"})
+```
+
+## Structs
+
+```elixir
+defmodule Fraction do
+  defstruct a: nil, b: nil
+  def new(a, b), do: %Fraction{a: a, b: b}
+  def value(%Fraction{a: a, b: b}), do: a / b
+
+  def add(%Fraction{a: a1, b: b1}, %Fraction{a: a2, b: b2}) do
+    new(
+      a1 * b2 + a2 * b1,
+      b2 * b1
+    )
+  end
+end
+```
+
+```elixir
+Fraction.new(1, 2)
+ |> Fraction.add(Fraction.new(1, 4))
+ |> Fraction.value()
+```
+
+Structs are basically maps with some advantages and cons, Enum can't be used with structs but can with maps, patter matching a struct to a map works but not the other way around. checks with structs happen at compile time while maps throw error at runtime.
+
+<!-- livebook:{"break_markdown":true} -->
+
+The ispect function allows inspection of value useful in the pipe operator to see how the data is transformed
+
+```elixir
+ Fraction.new(1, 4) |>
+ IO.inspect() |>
+ Fraction.add(Fraction.new(1, 4)) |>
+ IO.inspect() |>
+ Fraction.add(Fraction.new(1, 2)) |>
+ IO.inspect() |>
+ Fraction.value()
+```
+
+```elixir
+defmodule TodoList1 do
+  defstruct next_id: 1, entries: %{}
+  def new(entries \\ []) do
+    Enum.reduce(entries, %TodoList1{}, &add_entry(&2, &1))
+  end
+  def add_entry(todo_list, entry) do
+    entry = Map.put(entry, :id, todo_list.next_id)
+    new_entries = Map.put(todo_list.entries, todo_list.next_id, entry)
+    %TodoList1{todo_list | entries: new_entries, next_id: todo_list.next_id + 1}
+  end
+  def entries(todo_list, date) do
+    todo_list.entries
+    |> Map.values()
+    |> Enum.filter(fn entry -> entry.date == date end)
+  end
+  def update_entry(todo_list, entry_id, updater_fun) do
+    case Map.fetch(todo_list.entries, entry_id) do
+      :error -> 
+        todo_list
+      {:ok, old_entry} -> 
+        new_entry = updater_fun.(old_entry)
+        new_entries = Map.put(todo_list.entries, new_entry.id, new_entry)
+        %TodoList1{todo_list | entries: new_entries}
+    end
+  end
+  def delete_entry(todo_list, entry_id) do
+    %TodoList1{todo_list | entries: Map.delete(todo_list.entries, entry_id)} 
+  end
+end
+```
+
+```elixir
+todo_list = TodoList1.new() |>
+ TodoList1.add_entry(%{date: ~D[2023-12-19], title: "Dentist"}) |>
+ TodoList1.add_entry(%{date: ~D[2023-12-20], title: "Shopping"}) |>
+ TodoList1.add_entry(%{date: ~D[2023-12-19], title: "Movies"})
+```
+
+```elixir
+TodoList1.entries(todo_list, ~D[2023-12-19])
+```
+
+```elixir
+TodoList1.delete_entry(todo_list, 2)
+```
+
+## Exercises
+
+```elixir
+defmodule TodoList.CsvImporter do
+  def import(file) do
+    data = File.stream!(file)
+    |> Stream.map(&String.trim_trailing(&1, "\n"))
+    |> Stream.map(&String.split(&1, ","))
+    |> Enum.map(
+      fn x -> 
+          [key, value] = x
+          date = Date.from_iso8601!(key)
+          %{date: date, title: value}
+      end
+    )
+    TodoList1.new(data)
+  end
+end
+TodoList.CsvImporter.import("/home/gaya/projects/study/_2024_08_22_elixir/todos.csv")
+```
