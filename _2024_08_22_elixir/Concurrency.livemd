@@ -1,0 +1,297 @@
+<!-- livebook:{"autosave_interval_s":60} -->
+
+# Untitled notebook
+
+## Section
+
+## Process
+
+A beam process is a lightweight process that takes a few kb or memory to run, they are different from OS Processes as these takes more memory.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Following code simulate a long running process
+
+```elixir
+run_query = fn query_def ->
+  Process.sleep(2000)
+  "#{query_def} result"
+end
+```
+
+Running one process will take 2s to complete
+
+```elixir
+run_query.("query 1")
+```
+
+Running 5 process will take 10s to complete
+
+```elixir
+Enum.map(
+  1..5,
+  fn index ->
+    query_def = "query #{index}"
+    run_query.(query_def)
+  end
+)
+```
+
+To resolve this and make it a more scalable solution, we instanciate there queries into different processes
+
+```elixir
+spawn(fn ->
+  query_result = run_query.("query 1")
+  IO.puts(query_result)
+end)
+```
+
+Creating a helper lambda for concurent process
+
+```elixir
+async_query =
+  fn query_def ->
+    spawn(
+      fn ->
+        query_result = run_query.(query_def)
+        IO.puts(query_result)
+      end
+    )
+  end
+```
+
+Now calling async_query will still take 2 seconds to complete, but the calculation is none blocking because it happens in separate process
+
+```elixir
+async_query.("query 1")
+```
+
+Now calling async_query 5 times will result in the calculation stil taking only 2 seconds. this is because each call makes a separate process that all run at the same time.
+
+```elixir
+Enum.each(1..5, &async_query.("query #{&1}"))
+```
+
+## Message Passing
+
+Sending messages to a process can be done by using the send function and providing the PID (Process ID)
+
+```elixir
+send(self(), "a message")
+```
+
+Using receive do to pattern match the incoming message to predefined cases.
+
+```elixir
+receive do
+  "a message" -> IO.puts("hello world")
+  message -> IO.inspect(message)
+end
+ 
+```
+
+```elixir
+send(self(), {:message, 1})
+```
+
+```elixir
+receive do
+  {:message, id} -> IO.puts("received message #{id}")
+end
+```
+
+If a pattern is not matched or no messages are recieved, the funtion waits indefinitely and blocks the process, we avoid this using after like follows. The process waits for the amount of time specified and excecute the other function. (here its IO.puts)
+
+```elixir
+receive do
+  message -> IO.inspect(message)
+after
+  5000 -> IO.puts("message not received")
+end
+```
+
+## COLLECTING QUERY RESULTS
+
+Defining the code to run in separate processes, this code will return a string to the calling process, in this case the livebook process.
+
+```elixir
+async_query =
+  fn query_def ->
+    caller = self()
+    spawn(
+      fn ->
+        query_result = run_query.(query_def)
+        send(caller, {:query_result, query_result})
+      end
+    )
+  end
+```
+
+Calling async_query 5 times, the resulting message is stored in the queue untill consumed.
+
+```elixir
+Enum.each(1..5, &async_query.("query #{&1}"))
+```
+
+```elixir
+get_result =
+  fn ->
+    receive do
+      {:query_result, result} -> result
+    end
+  end
+```
+
+No getting all messages into a list.
+
+```elixir
+results = Enum.map(1..5, fn _ -> get_result.() end)
+```
+
+The same could be achieved with piping
+
+```elixir
+1..5
+  |> Enum.map(&async_query.("query #{&1}"))
+  |> Enum.map(fn _ -> get_result.() end)
+```
+
+## Stateful server processes
+
+These processes keep some king of data and are long lived, they go this by listening to messages and doing trail recustion.
+
+```elixir
+defmodule DatabaseServer do
+  def start do
+    spawn(
+      fn ->
+        connection = :rand.uniform(1000)
+        loop(connection)
+      end
+    )
+  end
+  defp loop(connection) do
+    receive do
+      {:run_query, from_pid, query_def} ->
+        query_result = run_query(connection, query_def)
+        send(from_pid, {:query_result, query_result})
+    end
+    loop(connection)
+  end
+  defp run_query(connection, query_def) do
+    Process.sleep(2000)
+    "Connection #{connection}: #{query_def} result"
+  end
+  def get_result do
+    receive do
+      {:query_result, result} -> result
+    after
+      5000 -> {:error, :timeout}
+    end
+  end
+  def run_async(server_pid, query_def) do
+    send(server_pid, {:run_query, self(), query_def})
+  end
+end
+```
+
+```elixir
+server_pid = DatabaseServer.start()
+DatabaseServer.run_async(server_pid, "query 1")
+DatabaseServer.get_result()
+
+```
+
+```elixir
+DatabaseServer.run_async(server_pid, "query 2")
+DatabaseServer.get_result()
+```
+
+The state is kept between the requests (Connection id)
+
+<!-- livebook:{"break_markdown":true} -->
+
+Changing the state is just as simple, passing a different state in the loop. for example passing a different state depending on recieved message.
+
+## Example
+
+```elixir
+defmodule Calculator do
+  def start, do: spawn(fn -> loop(0) end)
+  
+  def value(server_pid) do
+    send(server_pid, {:value, self()})
+    receive do
+      {:response, value} -> value
+    end
+  end
+  
+  def add(server_pid, value), do: send(server_pid, {:add, value})
+  def sub(server_pid, value), do: send(server_pid, {:sub, value})
+  def mul(server_pid, value), do: send(server_pid, {:mul, value})
+  def div(server_pid, value), do: send(server_pid, {:div, value})
+  
+  defp loop(current_value) do
+    new_value =
+      receive do
+        {:value, caller} ->
+          send(caller, {:response, current_value})
+          current_value
+        {:add, value} -> current_value + value
+        {:sub, value} -> current_value - value
+        {:mul, value} -> current_value * value
+        {:div, value} -> current_value / value
+        invalid_request ->
+          IO.puts("invalid request #{inspect invalid_request}")
+        current_value
+      end
+    loop(new_value)
+  end
+
+end
+```
+
+```elixir
+server = Calculator.start()
+Calculator.add(server,5)
+Calculator.mul(server, 10)
+Calculator.value(server)
+```
+
+Implementing the todolist with processes
+
+```elixir
+defmodule TaskServer do
+  def start, do: spawn(fn -> loop(TodoList1.new()) end)
+  
+  defp loop(todo_list) do
+    new_todo_list =
+      receive do
+        message -> process_message(todo_list, message)
+      end
+    loop(new_todo_list)
+  end
+  
+  def add_entry(todo_server, new_entry) do
+    send(todo_server, {:add_entry, new_entry})
+  end
+  
+  defp process_message(todo_list, {:add_entry, new_entry}) do
+    TodoList1.add_entry(todo_list, new_entry)
+  end
+  
+  def entries(todo_server, date) do
+    send(todo_server, {:entries, self(), date})
+    receive do
+      {:todo_entries, entries} -> entries
+    after
+      5000 -> {:error, :timeout}
+    end
+  end
+  
+  defp process_message(todo_list, {:entries, caller, date}) do
+    send(caller, {:todo_entries, TodoList1.entries(todo_list, date)})
+    todo_list
+  end
+end
+```

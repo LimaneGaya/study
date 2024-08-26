@@ -250,3 +250,43 @@ defmodule TodoList.CsvImporter do
 end
 TodoList.CsvImporter.import("/home/gaya/projects/study/_2024_08_22_elixir/todos.csv")
 ```
+
+## Protocols
+
+Protocol is an interface in OOP, you declare funtions and then implement them in concrete modules
+
+```elixir
+defprotocol String.Chars do
+  def to_string(term)
+end
+```
+
+Defining the implementation for a specific type is done like follows
+
+```elixir
+defimpl String.Chars, for: Integer do
+  def to_string(term) do
+    Integer.to_string(term)
+  end
+end
+```
+
+```elixir
+defimpl Collectable, for: TodoList1 do
+  def into(original), do: {original, &into_callback/2}
+  defp into_callback(todo_list, {:cont, entry}) do
+    TodoList1.add_entry(todo_list, entry)
+  end
+  defp into_callback(todo_list, :done), do: todo_list
+  defp into_callback(_todo_list, :halt), do: :ok
+end
+```
+
+```elixir
+entries = [
+  %{date: ~D[2023-12-19], title: "Dentist"},
+  %{date: ~D[2023-12-20], title: "Shopping"},
+  %{date: ~D[2023-12-19], title: "Movies"}
+]
+Enum.into(entries, TodoList1.new())
+```
