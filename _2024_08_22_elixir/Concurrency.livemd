@@ -1,6 +1,6 @@
 <!-- livebook:{"autosave_interval_s":60} -->
 
-# Untitled notebook
+# Processes
 
 ## Section
 
@@ -261,6 +261,35 @@ Calculator.value(server)
 Implementing the todolist with processes
 
 ```elixir
+defmodule TodoList1 do
+  defstruct next_id: 1, entries: %{}
+  def new(entries \\ []) do
+    Enum.reduce(entries, %TodoList1{}, &add_entry(&2, &1))
+  end
+  def add_entry(todo_list, entry) do
+    entry = Map.put(entry, :id, todo_list.next_id)
+    new_entries = Map.put(todo_list.entries, todo_list.next_id, entry)
+    %TodoList1{todo_list | entries: new_entries, next_id: todo_list.next_id + 1}
+  end
+  def entries(todo_list, date) do
+    todo_list.entries
+    |> Map.values()
+    |> Enum.filter(fn entry -> entry.date == date end)
+  end
+  def update_entry(todo_list, entry_id, updater_fun) do
+    case Map.fetch(todo_list.entries, entry_id) do
+      :error -> 
+        todo_list
+      {:ok, old_entry} -> 
+        new_entry = updater_fun.(old_entry)
+        new_entries = Map.put(todo_list.entries, new_entry.id, new_entry)
+        %TodoList1{todo_list | entries: new_entries}
+    end
+  end
+  def delete_entry(todo_list, entry_id) do
+    %TodoList1{todo_list | entries: Map.delete(todo_list.entries, entry_id)} 
+  end
+end
 defmodule TaskServer do
   def start, do: spawn(fn -> loop(TodoList1.new()) end)
   
@@ -279,6 +308,10 @@ defmodule TaskServer do
   defp process_message(todo_list, {:add_entry, new_entry}) do
     TodoList1.add_entry(todo_list, new_entry)
   end
+  defp process_message(todo_list, {:entries, caller, date}) do
+    send(caller, {:todo_entries, TodoList1.entries(todo_list, date)})
+    todo_list
+  end
   
   def entries(todo_server, date) do
     send(todo_server, {:entries, self(), date})
@@ -289,9 +322,208 @@ defmodule TaskServer do
     end
   end
   
-  defp process_message(todo_list, {:entries, caller, date}) do
-    send(caller, {:todo_entries, TodoList1.entries(todo_list, date)})
-    todo_list
+ 
+end
+```
+
+When working with server processes, it's important to always implement a catch all case to avoid messages accumulating in the mailbox and potentially degrade performance.
+
+```elixir
+defp loop
+  receive do
+    {:message, msg} -> do_something(msg)
+    other -> warn_about_unknown_message(other)
+  end
+  loop()
+end
+```
+
+## Generic server processes
+
+```elixir
+defmodule ServerProcess do
+  def start(callback_module) do
+    spawn(fn ->
+      initial_state = callback_module.init
+      loop(callback_module, initial_state)
+    end)
+  end
+
+  defp loop(callback_module, current_state) do
+    receive do
+      {:call, request, caller} ->
+        {response, new_state} = callback_module.handle_call(request, current_state)
+        send(caller, {:response, response})
+        loop(callback_module, new_state)
+
+      {:cast, request} ->
+        new_state = callback_module.handle_cast(request, current_state)
+        loop(callback_module, new_state)
+    end
+  end
+  
+  def cast(server_pid, request), do: send(server_pid, {:cast, request})
+
+  def call(server_pid, request) do
+    send(server_pid, {:call, request, self()})
+    receive do
+      {:response, response} -> response
+    end
+  end
+end
+
+defmodule KeyValueStore do
+  def init, do: %{}
+  def start, do: ServerProcess.start(KeyValueStore)
+  def put(pid, key, value), do: ServerProcess.call(pid, {:put, key, value})
+  def get(pid, key), do: ServerProcess.call(pid, {:get, key})
+  def handle_call({:put, key, value}, state) do
+    {:ok, Map.put(state, key, value)}
+  end
+  def handle_call({:get, key}, state), do: {Map.get(state, key), state}
+  def cast(pid, key, value), do: ServerProcess.cast(pid, {:put, key, value})
+  def handle_cast({:put, key, value}, state), do: Map.put(state, key, value)
+end
+```
+
+```elixir
+ pid = ServerProcess.start(KeyValueStore)
+```
+
+```elixir
+ServerProcess.call(pid, {:put, :some_key, :some_value})
+```
+
+```elixir
+ServerProcess.call(pid, {:get, :some_key})
+```
+
+```elixir
+pid = KeyValueStore.start()
+```
+
+```elixir
+KeyValueStore.cast(pid, :some_key, :some_value)
+```
+
+```elixir
+ KeyValueStore.get(pid, :some_key)
+```
+
+```elixir
+defmodule TodoServer do
+  def start, do: ServerProcess.start(TodoServer)
+
+  def add_entry(todo_server, new_entry) do
+    ServerProcess.cast(todo_server, {:add_entry, new_entry})
+  end
+
+  def entries(todo_server, date) do
+    ServerProcess.call(todo_server, {:entries, date})
+  end
+
+  def init, do: TodoList.new()
+
+  def handle_cast({:add_entry, new_entry}, todo_list) do
+    TodoList.add_entry(todo_list, new_entry)
+  end
+
+  def handle_call({:entries, date}, todo_list) do
+    {TodoList.entries(todo_list, date), todo_list}
+  end
+end
+
+defmodule TodoList do
+  defstruct next_id: 1, entries: %{}
+
+  def new(entries \\ []) do
+    Enum.reduce(
+      entries,
+      %TodoList{},
+      &add_entry(&2, &1)
+    )
+  end
+
+  def add_entry(todo_list, entry) do
+    entry = Map.put(entry, :id, todo_list.next_id)
+    new_entries = Map.put(todo_list.entries, todo_list.next_id, entry)
+
+    %TodoList{todo_list | entries: new_entries, next_id: todo_list.next_id + 1}
+  end
+
+  def entries(todo_list, date) do
+    todo_list.entries
+    |> Map.values()
+    |> Enum.filter(fn entry -> entry.date == date end)
+  end
+
+  def update_entry(todo_list, entry_id, updater_fun) do
+    case Map.fetch(todo_list.entries, entry_id) do
+      :error ->
+        todo_list
+
+      {:ok, old_entry} ->
+        new_entry = updater_fun.(old_entry)
+        new_entries = Map.put(todo_list.entries, new_entry.id, new_entry)
+        %TodoList{todo_list | entries: new_entries}
+    end
+  end
+
+  def delete_entry(todo_list, entry_id) do
+    %TodoList{todo_list | entries: Map.delete(todo_list.entries, entry_id)}
+  end
+end
+```
+
+## Using GenServer
+
+GenServer serve the same purpose as ServerProcess as it hides some boilerplates code
+
+```elixir
+defmodule KeyValueStore1 do
+  use GenServer
+  def start do
+    GenServer.start(KeyValueStore1, nil)
+  end
+  def put(pid, key, value) do
+    GenServer.cast(pid, {:put, key, value})
+  end
+  def get(pid, key) do
+    GenServer.call(pid, {:get, key})
+  end
+  def init(_) do
+    {:ok, %{}}
+  end
+  def handle_cast({:put, key, value}, state) do
+    {:noreply, Map.put(state, key, value)}
+  end
+  def handle_call({:get, key}, _, state) do
+    {:reply, Map.get(state, key), state}
+  end
+end
+```
+
+```elixir
+ {:ok, pid} = KeyValueStore1.start()
+```
+
+```elixir
+KeyValueStore1.put(pid, :some_key_1, "Hellow world")
+```
+
+```elixir
+ KeyValueStore1.get(pid, :some_key_1)
+```
+
+Compile time check, ensure that the functions declared satisfy the contract in the imported module in this case GenServer. It shows a warning on compile time telling that the funtion is not well implemented.
+
+```elixir
+defmodule EchoServer do
+  use GenServer
+  
+  @impl GenServer
+  def handle_call(some_request, server_state) do
+    {:reply, some_request, server_state}
   end
 end
 ```
