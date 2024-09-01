@@ -1,0 +1,144 @@
+<!-- livebook:{"autosave_interval_s":60} -->
+
+# Error Handling
+
+## Errors
+
+There are 3 types of errors in elixir, Errors, Throws and Exits.
+
+Error are raised typically from things like division by 0, calling none existing functions, error in pattern matching.
+
+Errors can be raised by using the marcro:
+
+```elixir
+raise("Something went wrong")
+```
+
+Functions that raises errors should always end with ! as per convention.
+
+Exits are an other type of Error that's used to terminate a process.
+
+```elixir
+spawn(
+  fn ->
+    exit("I'm done")
+    IO.puts("This doesn't happen")
+  end)
+```
+
+The text in the exits serves to provide more information when the Error is intercepted by an other process.
+
+The last error type Throw is used non local returns.
+Elixir does not have any break, continue, and return in recursions, throw can be used inside a deep loop to stop in and catch the return up the stack, this is not recomended and should be avoided as much as possible.
+
+## Error handling
+
+Error handling can be achieved with the usual try catch.
+
+```elixir
+try do
+  :erlang.phash2("hello world")
+  raise "Something bad"
+catch error_type, error_value ->
+  IO.puts(error_type)
+  IO.puts(error_value.message)
+end
+```
+
+```elixir
+try_helper = fn fun ->
+  try do
+    fun.()
+    IO.puts("No error.")
+  catch type, value ->
+    IO.puts(
+      """
+        Error
+        #{inspect(type)}
+        #{inspect(value)}
+      """
+    )
+  end
+  end
+```
+
+```elixir
+try_helper.(fn -> raise("Something went wrong") end)
+```
+
+```elixir
+try_helper.(fn -> throw("Thrown value") end)
+```
+
+```elixir
+try_helper.(fn -> exit("I'm done") end)
+```
+
+Raise returns a struct RuntimeError while throw and exit returns it's term like it is.
+
+Try catch block also return values like normal funtions.
+
+<!-- livebook:{"break_markdown":true} -->
+
+
+
+```elixir
+result =
+  try do
+    throw("Thrown value")
+  catch type, value -> {type, value}
+  end
+
+```
+
+An after keyword can be used for a code block to excecute in both success and failure
+
+```elixir
+try do
+  raise("Something went wrong")
+  catch
+    _,_ -> IO.puts("Error caught")
+  after
+    IO.puts("Cleanup code")
+end
+```
+
+Tail recursion cannot be achieved with try catch block because a value is always waited to return.
+
+## Concurrency errors
+
+Calling spawn will create a new process without any link to the other any error in one cannot be catched in the other.
+
+Callink spawn_linked with create a linked process, any error in one will result in both process stopping.
+
+There are some ways to keep the other process from closing
+
+```elixir
+spawn(
+  fn ->
+  Process.flag(:trap_exit, true)
+  spawn_link(
+    fn -> raise("Something went wrong") end)
+      receive do
+        msg -> IO.inspect(msg)
+      end
+  end)
+```
+
+Process.flag(:trap_exit, true) will make sure the calling process won't close when liked process have errors. instead the error is sent as a message in mailbox
+
+## Monitors
+
+a process can start monitoring an other process or listening for errors
+
+```elixir
+target_pid = spawn(
+  fn ->
+    Process.sleep(1000)
+  end
+)
+Process.monitor(target_pid)
+receive do
+  msg -> IO.inspect(msg)
+end
+```
