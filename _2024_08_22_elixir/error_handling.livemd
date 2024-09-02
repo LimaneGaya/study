@@ -125,7 +125,7 @@ spawn(
   end)
 ```
 
-Process.flag(:trap_exit, true) will make sure the calling process won't close when liked process have errors. instead the error is sent as a message in mailbox
+**Process.flag(:trap_exit, true)** will make sure the calling process won't close when liked process have errors. instead the error is sent as a message in mailbox
 
 ## Monitors
 
@@ -142,3 +142,13 @@ receive do
   msg -> IO.inspect(msg)
 end
 ```
+
+## Supervisors
+
+Supervisors as processes that manages the lifesycle of other processes, they can start processes 
+that are it's childrens and manage them using links, monitors, and exit traps.
+
+A supervisor start a child process and traps it's exits, if the child terminates the supervisor recieves a message and handle it acordingly, restart the child or something else.
+If the supervisor is terminated, all child processes are terminated as well.
+
+There are two ways to start a supervisor, basic one is using **Supervisor.start_link** and the other is using a module.
