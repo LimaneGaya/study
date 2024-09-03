@@ -152,3 +152,94 @@ A supervisor start a child process and traps it's exits, if the child terminates
 If the supervisor is terminated, all child processes are terminated as well.
 
 There are two ways to start a supervisor, basic one is using **Supervisor.start_link** and the other is using a module.
+
+## Discovering processes through a registry
+
+Sometimes when having multiple process linked to a supervisor you'd want to get all the runing processes ids. if you list processes on creation and one of them is terminated the list is no longer valid, to remedy this we use registeries.
+
+When a process starts it calls a funtions that adds it to the registery and since the registery is liked to the processes if one of them terminates it will be notified and the process will be removed from the registery.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Initiating a process as a registery:
+
+```elixir
+ Registry.start_link(name: :my_registry, keys: :unique)
+```
+
+**name** takes an atom, this atom is used to call funtions on the registery. The **key** is used for the type of registery (:unique or :duplicate)
+
+<!-- livebook:{"break_markdown":true} -->
+
+Now that the registery is created, it's time to create a process and linking it to the registery.
+
+```elixir
+spawn(
+  fn ->
+    Registry.register(:my_registry, {:database_worker, 1}, nil)
+    receive do
+      msg -> IO.puts("got message #{inspect(msg)}")
+    end
+  end
+)
+```
+
+Now to discover the processes linked to the registery:
+
+```elixir
+[{db_worker_pid, value}] = Registry.lookup(:my_registry, {:database_worker, 1})
+```
+
+```elixir
+send(db_worker_pid, :some_message)
+```
+
+Now because the process terminates itself after recieving a message, it should not be in the registery anymore.
+
+```elixir
+Registry.lookup(:my_registry, {:database_worker, 1})
+```
+
+## Via tuples
+
+Via tuple is an important concept in elixir, it provide a convenient way to register process into registery via third part process.
+
+```elixir
+defmodule EchoServer do
+  use GenServer
+  def start_link(id) do
+    GenServer.start_link(__MODULE__, nil, name: via_tuple(id))
+  end
+  def init(_), do: {:ok, nil}
+  def call(id, some_request) do
+    GenServer.call(via_tuple(id), some_request)
+  end
+  defp via_tuple(id) do
+    {:via, Registry, {:my_registr, {__MODULE__, id}}}
+  end
+  def handle_call(some_request, _, state) do
+    {:reply, some_request, state}
+  end
+end
+```
+
+when calling Genserve.start_link/3 the third argument is a via tuple wich is
+
+```elixir
+Registry.start_link(name: :my_registr, keys: :unique)
+```
+
+```elixir
+EchoServer.start_link("server one")
+EchoServer.start_link("server two")
+```
+
+```elixir
+EchoServer.call("server one", :some_request)
+```
+
+```elixir
+EchoServer.call("server two", :another_request)
+```
+
+A registery can use arbitrarly complex term to register processes
