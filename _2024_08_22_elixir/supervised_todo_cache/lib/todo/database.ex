@@ -3,7 +3,9 @@ defmodule Todo.Database do
   @db_folder "./persistElixirProject"
 
   def start_link do
+    IO.puts("Starting database server.")
     File.mkdir_p!(@db_folder)
+
     children = Enum.map(1..@pool_size, &worker_spec/1)
     Supervisor.start_link(children, strategy: :one_for_one)
   end
