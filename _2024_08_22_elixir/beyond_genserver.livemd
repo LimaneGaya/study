@@ -1,0 +1,59 @@
+<!-- livebook:{"autosave_interval_s":60} -->
+
+# Beyond GenServer
+
+## Tasks
+
+Task is a module used to run a job concurently, Task can be used in both awaited or none awaited, depending on if the starting process needs the results back or not.
+
+```elixir
+long_job = fn -> 
+  Process.sleep(2000)
+  :some_result 
+end
+```
+
+Calling **Task.async/1** to start the lambda
+
+```elixir
+task = Task.async(long_job)
+```
+
+The task can be awaited for by using **Task.await/1** but this will fail after 5s timeout, this can be changed with **Task.await/2**
+
+<!-- livebook:{"break_markdown":true} -->
+
+Task.async takes a zero arity function, the next example show how to use it with an arity function.
+
+```elixir
+run_query =
+  fn query_def ->
+    Process.sleep(2000)
+    "#{query_def} result"
+  end
+```
+
+```elixir
+queries = 1..5
+tasks =
+  Enum.map(
+    queries,
+    &Task.async(fn -> run_query.("query #{&1}") end)
+  )
+```
+
+```elixir
+Enum.map(tasks, &Task.await/1)
+```
+
+This is a short version with the pipe operator.
+
+```elixir
+1..5
+|> Enum.map(&Task.async(fn -> run_query.("query #{&1}") end))
+|> Enum.map(&Task.await/1)
+```
+
+```elixir
+
+```
