@@ -54,6 +54,105 @@ This is a short version with the pipe operator.
 |> Enum.map(&Task.await/1)
 ```
 
-```elixir
+There are also non-awaited task, these task just performs the calculation and finish with reason **:normal**. the can be created with **Task.start_link/1**
 
+```elixir
+Task.start_link(fn ->
+  Process.sleep(1000)
+  IO.puts("Hello from task")
+end)
+```
+
+## Task Supervisor
+
+Elixir provides a dedicated Task Supervisor similar to the previous one we used.
+
+```elixir
+Task.Supervisor.start_link(name: MyTaskSupervisor)
+```
+
+```elixir
+Task.Supervisor.start_child(
+  MyTaskSupervisor,
+  fn ->
+    IO.puts("Task started")
+    Process.sleep(2000)
+    IO.puts("Task stopping")
+  end
+)
+```
+
+## Agents
+
+Agents are similar to GenServer but simpler, the don't have **handle_info/2** or
+**terminate/1**
+
+Basics use of Agents
+
+```elixir
+{:ok, pid} = Agent.start_link(fn -> %{name: "Bob", age: 30} end)
+```
+
+```elixir
+Agent.get(pid, fn state -> state.name end)
+```
+
+The get function takes a pid and a lambda to execute inside the agent, the lambda takes the state of the agent in it's argument. the return value is sent to the caller process.
+
+```elixir
+ Agent.update(pid, fn state -> %{state | age: state.age + 1} end)
+```
+
+```elixir
+ Agent.get(pid, fn state -> state end)
+```
+
+**Agent.update/2** updates the state of the agent. this is a synchronous call, **Agent.cast/2** can be used asynchronously.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Change in the state of an Agent can be noticed by other processes
+
+```elixir
+ {:ok, counter} = Agent.start_link(fn -> 0 end)
+ spawn(fn -> Agent.update(counter, fn count -> count + 1 end) end)
+
+```
+
+```elixir
+ Agent.get(counter, fn count -> count end)
+```
+
+Agent module is implemented in plain Elixir on top of GenServer. Agent can't be used to handle messages, or logic on termination, in those usecases GenServer is better suited.
+
+## ETS tables
+
+Ets table are special in memory structure for storing erlang terms, they are really good for scalability compared to processes (which can be a bottleneck).
+
+ETS tables don't have garbage collection, memory is freed on delete, ETS table memory is only freed when spawning process is terminated.
+
+Creating a ETS table is done by calling the Erlang :ets module, **:ets.new/2**
+
+```elixir
+ table = :ets.new(:my_table, [])
+```
+
+```elixir
+:ets.insert(table, {:key_1, 1})
+```
+
+```elixir
+ :ets.insert(table, {:key_2, 2})
+```
+
+```elixir
+:ets.insert(table, {:key_1, 3})
+```
+
+```elixir
+:ets.lookup(table, :key_1)
+```
+
+```elixir
+ :ets.lookup(table, :key_2)
 ```
