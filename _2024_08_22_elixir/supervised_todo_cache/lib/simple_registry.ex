@@ -1,6 +1,8 @@
 defmodule SimpleRegistry do
   use GenServer
 
+  @table :mytable
+
   def start_link() do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
@@ -8,36 +10,32 @@ defmodule SimpleRegistry do
   @impl GenServer
   def init(_) do
     Process.flag(:trap_exit, true)
-    {:ok, %{}}
+    :ets.new(@table, [:named_table, :public, read_concurrency: true, write_concurrency: true])
+    {:ok, nil}
   end
 
-  @spec register(pid(), term()) :: :ok
-  def register(pid, name) do
-    GenServer.cast(__MODULE__, {:register, pid, name})
+  @spec register(term()) :: :ok | :error
+  def register(name) do
+    Process.link(Process.whereis(__MODULE__))
+
+    if :ets.insert_new(@table, {name, self()}) do
+      :ok
+    else
+      :error
+    end
   end
 
-  @spec whereis(term()) :: pid() | nil
+  @spec whereis(term()) :: pid() | [term()]
   def whereis(name) do
-    GenServer.call(__MODULE__, {:whereis, name})
-  end
-
-  @impl GenServer
-  def handle_cast({:register, pid, name}, state) do
-    Process.link(pid)
-    {:noreply, Map.put(state, name, pid)}
-  end
-
-  @impl GenServer
-  def handle_call({:whereis, name}, _, state) do
-    case Map.fetch(state, name) do
-      {:ok, pid} -> {:reply, pid, state}
-      :error -> {:reply, nil, state}
+    case :ets.lookup(@table, name) do
+      [{^name, pid}] -> pid
+      [] -> nil
     end
   end
 
   @impl GenServer
-  def handle_info({:EXIT, pid, :normal}, state) do
-    map = Map.filter(state, fn {_, value} -> value == pid end) |> Map.keys()
-    {:noreply, Map.drop(state, map)}
+  def handle_info({:EXIT, pid, _}, state) do
+    :ets.match_delete(@table, {:_, pid})
+    {:noreply, state}
   end
 end
