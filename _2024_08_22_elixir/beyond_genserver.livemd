@@ -156,3 +156,101 @@ Creating a ETS table is done by calling the Erlang :ets module, **:ets.new/2**
 ```elixir
  :ets.lookup(table, :key_2)
 ```
+
+ETS tables support other table types,
+
+**:set** the default. One row per distinct key is allowed.
+
+**:ordered_set** like :set but rows are in order via the < and > operators.
+
+**:bag** Multiple rows with the same key are allowed, but two rows can’t be completely identical.
+
+**:duplicate_bag** Multiple rows with the same key are allowed, even duplicated ones.
+
+```elixir
+table1 = :ets.new(:some_table, [:set])
+table2 = :ets.new(:some_table, [:ordered_set])
+table3 = :ets.new(:some_table, [:bag])
+table4 = :ets.new(:some_table, [:duplicate_bag])
+```
+
+An other important aspect is access permission.
+
+**:protected** The default. The owner process can write/read, others can only read.
+
+**:public** All processes can read/write.
+
+**:private** Only the owner process can read/write
+
+```elixir
+table5 = :ets.new(:some_table, [:protected, :duplicate_bag])
+table6 = :ets.new(:some_table, [:public, :duplicate_bag])
+table7 = :ets.new(:some_table, [:private, :duplicate_bag])
+```
+
+The table name is an atome, by default it serves no purpose and processes need the table pid to access it. You can create multiple tables with the same name and they will all be different.
+
+It's possible to use an atome as identifier for a table by passing **:named_table** as argument.
+
+It's not possible to create two identically named ETS table.
+
+```elixir
+table8 = :ets.new(:my_table_named, [:private, :duplicate_bag, :named_table])
+```
+
+```elixir
+:ets.insert(:my_table_named, {:key_1, 3})
+```
+
+```elixir
+:ets.lookup(:my_table_named, :key_1)
+```
+
+```elixir
+:ets.lookup(:my_table_named, :key_2)
+```
+
+**:ets.insert/2** to inserting new values.
+
+**:ets.delete/2** to delete values.
+
+**:ets.update_element/3** to update value.
+
+**:ets.update_counter/4** to update an integer in a row.
+
+It's good practive to start with GenServer and switch to an ETS table if it becomes a bottleneck.
+
+<!-- livebook:{"break_markdown":true} -->
+
+in ets tables you can lookup for a key value by searching its key with **:ets.lookup/2**. sometimes you'd want to look specific values, to do that, there is **:ets.match_object/2**.
+
+```elixir
+ todo_list = :ets.new(:todo_list, [:bag])
+:ets.insert(todo_list, {~D[2023-05-24], "Dentist"})
+:ets.insert(todo_list, {~D[2023-05-24], "Shopping"})
+:ets.insert(todo_list, {~D[2023-05-30], "Dentist"})
+```
+
+```elixir
+:ets.lookup(todo_list, ~D[2023-05-24]) #key lookup
+```
+
+```elixir
+:ets.match_object(todo_list, {:_, "Dentist"}) # value lookup with match pattern
+```
+
+This is not the same as patter matching, this iterates through the rows and return the matching one.
+
+Notice the use of **:_** atome instead of _, this is used when you don't care to match the key value.
+
+There is also **:ets.match_delete/2** which deletes multiple elements at the same time.
+
+It's possible to make more complex filter with **:ets.select/2**
+
+<!-- livebook:{"break_markdown":true} -->
+
+It's worth noting that Erlang comes with two utilities related to ETS.
+
+**DETS** disk-based Erlan Term Storage.
+
+**Mnesia** database built on top of ETS and DETS.
