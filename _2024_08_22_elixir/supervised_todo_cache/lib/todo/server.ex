@@ -1,7 +1,7 @@
 defmodule Todo.Server do
   use GenServer, restart: :temporary
 
-  @expiry_idle_timeout :timer.seconds(10)
+  @expiry_idle_timeout :timer.seconds(180)
 
   def start_link(name) do
     GenServer.start_link(Todo.Server, name, name: via_tuple(name))

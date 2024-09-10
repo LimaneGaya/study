@@ -1,0 +1,73 @@
+<!-- livebook:{"autosave_interval_s":60} -->
+
+# Working with components
+
+## OTP applications
+
+For the application to be standalone and start when the beam start, it needs to be an OTP application.
+
+In the mix.exs that was created when creating the project with mix.
+
+```elixir
+defmodule Todo.MixProject do
+  use Mix.Project
+
+  def project do
+    [
+      app: :todo,
+      version: "0.1.0",
+      elixir: "~> 1.17",
+      start_permanent: Mix.env() == :prod,
+      deps: deps()
+    ]
+  end
+
+  # Run "mix help compile.app" to learn about applications.
+  def application do
+    [
+      extra_applications: [:logger],
+      mod: {Todo.Application, []}  # This line needs to be added.
+    ]
+  end
+
+  # Run "mix help deps" to learn about dependencies.
+  defp deps do
+    [
+      # {:dep_from_hexpm, "~> 0.3.0"},
+      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+    ]
+  end
+end
+
+```
+
+As well as adding a file in the project lib.
+
+```elixir
+defmodule Todo.Application do
+  use Application
+
+  def start(_, _) do
+    Todo.System.start_link()
+  end
+end
+```
+
+This is used as a starting point of the application.
+
+After that the application will launch on the project initialization.
+
+## Adding a dependency
+
+Adding dependencies to an application is as simple as adding an dependencies in mix.exs
+
+```elixir
+  defp deps do
+    [
+      # {:dep_from_hexpm, "~> 0.3.0"},
+      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+    ]
+  end
+```
+
+These packages can be found in hex.pm
