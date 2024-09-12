@@ -71,3 +71,11 @@ Adding dependencies to an application is as simple as adding an dependencies in 
 ```
 
 These packages can be found in hex.pm
+
+## Configuring applications
+
+OTP applications can be configured using an application environement, an in memory key value store where keys are atoms and values are elixir terms.
+
+these resides in elixir scripts, in the config folder. These can be accessed though the **Application** module.
+
+**config/runtime.exs** file is an example of a script that evaluate at runtime before the application starts. It is a good place it's enviroment configuration.
