@@ -79,3 +79,14 @@ OTP applications can be configured using an application environement, an in memo
 these resides in elixir scripts, in the config folder. These can be accessed though the **Application** module.
 
 **config/runtime.exs** file is an example of a script that evaluate at runtime before the application starts. It is a good place it's enviroment configuration.
+
+Sometimes it's good practive to separate configuration for different mix environement for that setting can be chosen like:
+
+```elixir
+http_port =
+  if config_env() != :test,
+    do: System.get_env("TODO_HTTP_PORT", "5454"),
+    else: System.get_env("TODO_TEST_HTTP_PORT", "5455")
+```
+
+It's best practive to separate, production, test, dev. things like port, database... so they wouldn't polute and interfere with each other.
