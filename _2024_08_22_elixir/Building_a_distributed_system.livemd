@@ -1,0 +1,162 @@
+<!-- livebook:{"autosave_interval_s":60} -->
+
+# Building a distributed system
+
+## Distribution primitives
+
+A distributed system in erlang is different nodes running on the same or different machine that are associated to each other.
+
+starting a clusted can be done using --sname
+
+```elixir
+ iex --sname node1@localhost
+```
+
+This will start a beam node with **node1** as it's name, this name is represented internally as an atome.
+
+This makes it easy to connect two nodes, starting an other node and then connecting it to the first one.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Calling **node/0** to print the current node name
+
+```elixir
+node() 
+```
+
+```elixir
+iex --sname node2@localhost
+```
+
+```elixir
+Node.connect(:node1@localhost)
+```
+
+Calling **Node.list/0** will list all connected node.
+
+And **Node.list([:this, :visible])** to list all available nodes including the curent one.
+
+**:this** means that you'd want to list the current node and **:visible** that you want to list all visible nodes (it's possible to start a node as hidden).
+
+It's not uncommon for a node to stop working and disconnect, that's why each node send tick to each other periodically to verify the connection is still healthy. The node is considered disconnected after 4 unanswered ticks. There is no attempt to connect again after that.
+
+Notification can be sent when this happens using **Node.monitor/1**, and **:net_kernel.monitor_nodes** to monitor all connections and disconnections.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Knowing this, nodes can cooperate together. One way to do that is by calling **Node.spawn/2**, this takes a node name and a lambda, it then spawn a new process and start the lambda in that node.
+
+```elixir
+Node.spawn(
+  :node2@localhost,
+    fn -> IO.puts("Hello from #{node()}") end
+  )
+```
+
+Starting a process on an other node happen like it's on the same node see the following:
+
+```elixir
+caller = self()
+Node.spawn(
+  :node2@localhost,
+  fn -> send(caller, {:response, 1+2}) end
+)
+flush()
+```
+
+This calls the lambda in a new process inside node2, notice the pid of the caller process is still passed to the new process and a message is recieved back from it. Just like when done locally on one node.
+
+Keep in mind that when sending a message it is encoded using **:erlang.term_to_binary/1** and decoded with **:erlang.binary_to_term/1**.
+
+It's better to avoid Spawning lambdas on other nodes as this can result in some issues, like when updating an application on one server and the other is not updated yet.
+
+Is it therefore preffered to use **Node.spawn/4** which take a MFA (Module, Function, Argument).
+
+One other thing to keep in mind when in a multinode setup is registering a name in a node only makes it available on that node. this means you can regiter the same name in each of the other nodes.
+
+Calling **Send(atome, message)** will only send it to local node.
+
+Calling **Send({atome, other_node_name}, message)** will send it to a remote node.
+
+Worth mentionning
+**GenServer.abcast/3** and **GenServer.multi_call/4** for sending request to all locally registered processes.
+
+<!-- livebook:{"break_markdown":true} -->
+
+As discussed before, for communication to happen there needs to be a way to discover process pids, previously discussed Registery works well locally but they are not viable in a cluster.
+
+For cluster usage we can use **:global** module that let us register names globally.
+
+For example we can set node1 to register as responsible for bob's todo list.
+
+```elixir
+:global.register_name({:todo_list, "bob"}, self())
+```
+
+To find the process pid:
+
+```elixir
+:global.whereis_name({:todo_list, "bob"})
+```
+
+Global registration takes some chatting between connected servers while lookups are performed in a fast cheap way.
+
+A process pid is the form of:  <X.Y.Z>, When a process is local, it's PID will be in the form of <0.Y.Z> where Z is non null when there are many preocesses on the node.
+If X is none null you can be sure it's a remote process. X is an internal reference to a node.
+
+Node where the process is running can be determined with **Kernel.node/1**
+
+Global registration can be used for GenServer as well
+
+```elixir
+GenServer.start_link(
+  __MODULE__,
+  arg,
+  name: {:global, some_global_alias}
+)
+GenServer.call({:global, some_global_alias}, ...)
+```
+
+If a process fail it is unregistered from all other nodes.
+
+<!-- livebook:{"break_markdown":true} -->
+
+An other concept is Process Groups, this is used to group multiple processes under the same global name. for this **:pg** (process groups) module is used.
+
+```elixir
+:pg.start_link()
+```
+
+**:pg** neets to be initialized on all nodes
+
+```elixir
+Node.connect(:node1@localhost)
+:pg.join({:todo_list, "bob"}, self())
+```
+
+This adds the process to the group, this needs to be done for all other processed on other nodes that needs to be in the group.
+
+After this calling **:pg.get_members/1** to get all registered processes
+
+```elixir
+:pg.get_members({:todo_list, "bob"})
+```
+
+This could be usefull for updating all instance of a process responsible of a certain task, using for example **GenServer.multi_call/4**
+
+<!-- livebook:{"break_markdown":true} -->
+
+Links and monitors work even on remote nodes.
+These link and monitor send an exit or down message if
+
+Crash of a linked or monitored process
+
+Crash of a BEAM instance
+
+Network connection loss
+
+<!-- livebook:{"break_markdown":true} -->
+
+Node.spawn can be used to call funtions on other node but these are fire and forget kind of calls.
+
+**:rpc.call/4** can be used to call a MFA and fait for the answer.
