@@ -1,0 +1,77 @@
+<!-- livebook:{"autosave_interval_s":60} -->
+
+# Running the system
+
+## Starting
+
+The essencial part of starting an erlang application is compile all the compenents of the app and place them in an accessible place, then start a beam instance and load all of them. Finally start all OTP applications.
+
+This was all done previourly with **iex -S mix**, but in production, we'd want to start the it as a background application. it can be done with mix using **mix run --no-halt**, this start a BEAM instance and loads and start all OTP applications and their dependencies. the --no-halt tells it to run it forever.
+
+A more elaborate way to start it is with **elixir -S mix run --no-halt**. This let us run it in the background.
+
+It's also usefull to start the BEAM in detached mode. This with detache the process from the terminal and will not show any output, it's important to start the instance as a node so it can be accessible, and possible to shut down when it's needed.
+
+This can be done with **elixir --erl "-detached" --sname todo_system@localhost -S mix run --no-halt**
+
+The following command run an other node and establish a remote shell
+**iex --sname debugger@localhost --remsh todo_system@localhost --hidden** the node starts as hidden and all functions invoked will be run in todo_system
+
+To stop the system there is **System.stop/0**
+
+```elixir
+
+```
+
+## Scripts
+
+Scripts are useful for creating a command line tool that does some quick calculations and stops.
+
+Scripts are in the following structure
+
+```elixir
+defmodule MyTool do
+  def run do
+    ...
+  end
+  ...
+end
+MyTool.run()
+```
+
+Scripts can be invoked using **elixir scriptname.exs**
+
+External libraries can be added to the script using **Mix.install**
+
+```elixir
+Mix.install([{:jason, "~> 1.4"}])
+input = hd(System.argv())
+decoded = Jason.decode!(input)
+IO.inspect(decoded)
+```
+
+Mix install follows the format in **mix.exs**. putting this in a file json_decode.exs and running the command
+
+**elixir json_decode.exs '{"some_key": 42}'** will result in %{"some_key" => 42}
+
+Though script are compiled to memory and not on disk, the external libraries are compiled and cached to disk. this will make subsequent executions much faster
+
+```elixir
+defmodule MyTool.Runner do
+  def run do
+    ...
+  end
+end
+```
+
+This can be excecuted using **mix run -e MyTool.Runner.run** this does the calculation and exit.
+
+An other way it to use **Escript**, a tool to package all beam files and scripts into a single binary file which is fully compiled, crossplatform that only need erlang installed on the host machine.
+
+An other tool in **archive.install**
+
+<!-- livebook:{"break_markdown":true} -->
+
+To launch the system in production **MIX_ENV=prod elixir -S mix run --no-halt**
+
+Performance testing should always be done in prod environement as dev is not as optimized and may lead to false benchmarks.
