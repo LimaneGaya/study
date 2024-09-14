@@ -160,3 +160,63 @@ Network connection loss
 Node.spawn can be used to call funtions on other node but these are fire and forget kind of calls.
 
 **:rpc.call/4** can be used to call a MFA and fait for the answer.
+
+<!-- livebook:{"break_markdown":true} -->
+
+When calling remote funtions it's important to keep in mind the concept of locks.
+
+Calling **:global.set_lock/1** will block the name for other nodes untill you call **:global.del_lock({:some_resource, self()})** again on the same node to release the lock. 
+If an other node ask for the lock it will wait untill that lock is released. This look like a synchronization call on local node and it works almost the same.
+
+**:global.trans/2** is a helper function that takes a name and a lambda and will lock the name untill the lambda is finished and release the lock after.
+
+This usually avoided as it can block processes and lead to deadlocks, livelocks, or starvation, however there are cases where this improves performance
+
+## Building a fault-tolerant cluster
+
+* The basic registration facility is a local registration that allows you to use a
+  simple atom as an alias to the single process on a node.
+* Registry extends this by letting you use rich aliases—any term can be used
+  as an alias.
+* :global allows you to register a cluster-wide alias.
+* :pg is useful for registering multiple processes behind a cluster-wide alias
+  (process group), which is usually suitable for distributed pub-sub scenarios.
+
+<!-- livebook:{"break_markdown":true} -->
+
+To connect nodes on different server, they need to agree on a cookie (passphrase), local nodes agree on this because the first instance generate a cookie and store it on disk and the other read from it when starting. on different server however, this cookies needs to be set either with **Node.set_cookie/1** or by passing it when starting a new node **iex --sname node1@localhost --cookie another_cookie**. This cookie can be obtained using **Node.get_cookie/0**, cookies are rempresented as an atome. They help in the security of the system.
+
+Sometimes you'd want to start node but make them hidden from the cluster and vice versa, this can be done when starting a node with **--hidden**.
+
+Hidden nodes can be listed with **Node.list([:hidden])**
+
+Calling **Node.list([:connected])** will list all visible and hidden nodes
+
+Calling **Node.list([:visible])** will show only visible ones
+
+It's advised to use visible when performing operation, services like :global, :rpc, and :pg all ignore hidden nodes3
+
+<!-- livebook:{"break_markdown":true} -->
+
+### Firewall
+
+When an node try to connect with an other node it first connect with the Erlang Port Mapper Daemon (EPMD) who then gives the port of the node. The EPMD listens on port 4369, this port must be accessible.
+
+Nodes listen to random port when started this is not perfect as it's not possible to set a firewall.
+
+erlang give us a setting when starting it to configure a range of ports to use for nodes.
+
+```elixir
+iex \
+--erl '-kernel inet_dist_listen_min 10000' \
+--erl '-kernel inet_dist_listen_max 10100' \
+--sname node1@localhost
+```
+
+These can be set to the same number, though it means only one node should be started or there will be a clash.
+
+It's possible to inspect all node port on a system using **:net_adm.names/0**
+
+Is summary, port number 4369 and the port setup for nodes need to be accessible.
+
+BEAM instance can access all the system if given the privilege, it's always a good practice to start BEAM instace in lowest privilege and avoid exposing them to internet.
