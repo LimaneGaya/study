@@ -75,3 +75,151 @@ An other tool in **archive.install**
 To launch the system in production **MIX_ENV=prod elixir -S mix run --no-halt**
 
 Performance testing should always be done in prod environement as dev is not as optimized and may lead to false benchmarks.
+
+## OTP release
+
+An OTP release is self-contained application with all dependencies and application required to run. 
+It can even include a minimum set of erlang runtime binaries which makes the release trully self-contained.
+
+To do that we use the mix tool, **mix release** by default it compiles in the dev env this can be changed with **MIX_ENV=prod mix release** or by adding this to **mix.exs**
+
+```elixir
+defmodule Todo.MixProject do
+  ...
+  def cli do
+    [
+      preferred_envs: [release: :prod]
+    ]
+  end
+  ...
+end
+```
+
+The main tool used to interact with a release is **_build/prod/rel/todo/bin/todo** where the script can
+
+* Start the system and iex shell in the foreground.
+* Start the system as a background process.
+* Stop the running system.
+* Attach a remote shell to the running system.
+* **RELEASE_NODE="todo@localhost" _build/prod/rel/todo/bin/todo start_iex** is used to start the app and iex in the forground. **RELEASE_NODE** is used to set the node name.
+
+To start the system as a background process
+
+**RELEASE_NODE="todo@localhost" _build/prod/rel/todo/bin/todo daemon**
+
+Once the system is running in the background
+
+**RELEASE_NODE="todo@localhost" _build/prod/rel/todo/bin/todo remote** can be used to start a remote shell. hitting CTRL + C twice will close the remote shell but not the background process. Note this will not print to the remote shell.
+
+**RELEASE_NODE="todo@localhost" _build/prod/rel/todo/bin/todo stop** to stop the app in background process
+
+To attach directly to the shell the application need to be started with
+
+**RELEASE_NODE="todo@localhost" _build/prod/rel/todo/bin/todo daemon_iex**
+
+Then to attach to the shell
+
+**_build/prod/rel/todo/erts-13.0/bin/to_erl _build/prod/rel/todo/tmp/pipe/**
+
+It's important to be carefull when attaching dirrectly to the shell as it can affect the running code or even stop the application if not detached properly.
+
+Additionally the script can perform various other types of commands that can be seen with
+
+**_build/prod/rel/todo/bin/todo**
+
+<!-- livebook:{"break_markdown":true} -->
+
+Adding files is easily done by adding them to a folder named **priv** on the root dir of the app.
+
+These files can then be accessed with **Application.app_ dir(:an_app_name, "priv")**
+
+**Configuration files**
+
+These are found in **_build/prod/rel/todo/releases/0.1.0** where the most relavant ones are **vm.args** and **env.sh**
+
+## Analyzing system behavior
+
+### Debugging
+
+<!-- livebook:{"break_markdown":true} -->
+
+Classical debugging practices cannot be applied to a highly concurent system. In elixir, by default when a problem arise it is logged out with the help of the :logger application, if a GenServer fails, it is logged with a stack trace.
+
+It is also useful to use **IO.inspect** to try to figure out where the issue arises.
+
+An other way is to use **dbg** macro
+
+An other usefull tool is **pry** which temporarily stops excecution in the iex shell and inspect the state of the system.
+
+It's also usefull to use benshmarking tool like **:timer.tc/1** which takes a lambda and returns it along with the time it took in microseconds.
+
+Erlang comes shipped with a few profiling tools like **cprof, eprof, and fprof** which could be used from elixir using **mix profile.cprof**. as well as other external benching libraries like **Benchee**.
+
+<!-- livebook:{"break_markdown":true} -->
+
+### Logging
+
+<!-- livebook:{"break_markdown":true} -->
+
+In production, IO.inspect and dbg can't be used to know what's going on. For this it's better to use **logger**, by default, logger displays all crashes and stack traces to the iex console. if the system is started in release, the output is redirected to the **log** folder under the root folder of the release.
+
+In production it's better so start a remote shell and investigate with the help of functions like **:erlang.system_info/1** and **:erlang.memory/0**, **Process.list/0**, **Process.info/1**
+
+An other way is to use :observer to investigate a remote application, this will work is the remote production application have **:runtime_tools** running
+
+<!-- livebook:{"break_markdown":true} -->
+
+After adding the runtime tools to the application it can be started as background app with
+
+**RELEASE_NODE="todo@localhost" RELEASE_COOKIE="todo" _build/prod/rel/todo/bin/todo daemon**
+
+Where RELEASE_COOKIE="todo" is used like passphrase to connect to the node.
+
+Now an other hidden node can be started as an observer of this background application with
+
+**iex --hidden --sname observer@localhost --cookie todo**
+
+and then **:observer.start()** in the iex.
+
+<!-- livebook:{"break_markdown":true} -->
+
+### Tracing
+
+<!-- livebook:{"break_markdown":true} -->
+
+It's also possible to trace function calls, using **:sys** allow us to trace OTP complient processes. You can turn on tracing for a process using **:sys.trace/2**
+
+To trace a function call we use:
+
+**:sys.trace(Todo.Cache.server_process("bob"), true)**
+
+And when finished with the tracing, we should stop it as it has a performance impact, especially for process with big state or when it's heavily loaded.
+
+**:sys.trace(Todo.Cache.server_process("bob"), false)**
+
+Other usefull functions in :sys are
+
+**:sys.get_state/1** and **:sys.replace_state/2** other usefull tools **:erlang.trace/3** that allows subscription to events like message passing and function call. and the mobule **:dbg** that can be started on the attached console or start an other node and make it trace the main system like
+
+**iex --sname tracer@localhost --cookie todo --hidden**
+
+```elixir
+:dbg.tracer()
+:dbg.n(:"todo@localhost")
+:dbg.p(:all, [:call])
+:dbg.tp(Todo.Server, [])
+```
+
+❶ Starts the tracer process.
+
+❷ Subscribes only to events from the todo node.
+
+❸ Subscribes to function calls in all processes.
+
+❹ Sets the trace pattern to all functions from the Todo.Server process.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Be careful about tracing in production because huge numbers of
+traces may flood the system. Once you’re finished tracing, invoke
+**:dbg.stop_clear/0**
