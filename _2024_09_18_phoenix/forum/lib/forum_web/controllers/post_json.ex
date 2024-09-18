@@ -18,6 +18,7 @@ defmodule ForumWeb.PostJSON do
   defp data(%Post{} = post) do
     %{
       id: post.id,
+      user_id: post.user_id,
       body: post.body,
       title: post.title
     }
