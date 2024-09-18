@@ -20,7 +20,7 @@ config :forum, ForumWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "YS9fg6y+kmiQpMLE9dpTbgAN8JrCXM+CcJfSTWGvXupUXEDZ1WocGvo6mCOBeP49",
+  secret_key_base: "PdB4gupqVKuy+t1rZKRtgvHWzB9K/OuScne5knWxPd52Z2Ml4WgRBbjm7NQbamY4",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:forum, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:forum, ~w(--watch)]}

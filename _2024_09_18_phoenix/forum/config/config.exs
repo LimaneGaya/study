@@ -20,7 +20,7 @@ config :forum, ForumWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Forum.PubSub,
-  live_view: [signing_salt: "fltK/X0U"]
+  live_view: [signing_salt: "VYtaxmIx"]
 
 # Configures the mailer
 #

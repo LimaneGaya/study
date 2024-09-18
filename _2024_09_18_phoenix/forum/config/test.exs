@@ -14,7 +14,7 @@ config :forum, Forum.Repo,
 # you can enable the server option below.
 config :forum, ForumWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "LCr+7DApD7PLVFPRQOUsJKRHIPKqrSUhvni/IO9ZWsAf8VVj2+SurPn0Rlxw5T6z",
+  secret_key_base: "DPrzDxV0IFVst7ZQw9rSPl9cwxRbi8blDIzm7DxFePsFCnT7XhChmM5UCKftAywC",
   server: false
 
 # In test we don't send emails

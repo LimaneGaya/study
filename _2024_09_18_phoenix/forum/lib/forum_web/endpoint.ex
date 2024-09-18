@@ -7,7 +7,7 @@ defmodule ForumWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_forum_key",
-    signing_salt: "WWk2fLP8",
+    signing_salt: "ot31POqR",
     same_site: "Lax"
   ]
 
