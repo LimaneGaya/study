@@ -1,5 +1,6 @@
 defmodule ForumWeb.UserJSON do
   alias Forum.Accounts.User
+  alias ForumWeb.PostJSON
 
   @doc """
   Renders a list of users.
@@ -19,7 +20,8 @@ defmodule ForumWeb.UserJSON do
     %{
       id: user.id,
       name: user.name,
-      email: user.email
+      email: user.email,
+      posts: Enum.map(user.posts, &PostJSON.data/1)
     }
   end
 end
