@@ -265,4 +265,9 @@ defmodule Contexts.ShoppingCart do
   def change_cart_item(%CartItem{} = cart_item, attrs \\ %{}) do
     CartItem.changeset(cart_item, attrs)
   end
+
+  def prune_cart_items(%Cart{} = cart) do
+    {_, _} = Repo.delete_all(from(i in CartItem, where: i.cart_id == ^cart.id))
+    {:ok, reload_cart(cart)}
+  end
 end
