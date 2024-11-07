@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -32,24 +33,31 @@ class _AdvancedRotationState extends State<AdvancedRotation>
 
   void startFlipAnim(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
-    final v = flipAnim.value;
-    flipAnim = Tween<double>(begin: v, end: v + pi).animate(
-      CurvedAnimation(parent: flipCont, curve: Curves.bounceOut),
+    Future.delayed(
+      Duration(seconds: 1),
+      () {
+        final v = flipAnim.value;
+        flipAnim = Tween<double>(begin: v, end: v + pi).animate(
+          CurvedAnimation(parent: flipCont, curve: Curves.bounceOut),
+        );
+        flipCont
+          ..reset()
+          ..forward();
+      },
     );
-    flipCont
-      ..reset()
-      ..forward();
   }
 
   void startRotAnim(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
-    final v = rotAnim.value;
-    rotAnim = Tween<double>(begin: v, end: v - pi / 2).animate(
-      CurvedAnimation(parent: rotCont, curve: Curves.bounceOut),
-    );
-    rotCont
-      ..reset()
-      ..forward();
+    Future.delayed(Duration(seconds: 1), () {
+      final v = rotAnim.value;
+      rotAnim = Tween<double>(begin: v, end: v - pi / 2).animate(
+        CurvedAnimation(parent: rotCont, curve: Curves.bounceOut),
+      );
+      rotCont
+        ..reset()
+        ..forward();
+    });
   }
 
   @override

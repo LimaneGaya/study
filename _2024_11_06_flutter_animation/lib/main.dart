@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animation/3%20-%203D%20animation/animation3d.dart';
 
 import '1 - simple rotation animation/rotation.dart';
 import '2 - chained animations/rotation.dart';
@@ -36,6 +37,10 @@ class App extends StatelessWidget {
             ListTile(
               title: Text("2 - Advanced Rotation"),
               onTap: () => moveTo(context, AdvancedRotation()),
+            ),
+            ListTile(
+              title: Text("3 - 3D Animation"),
+              onTap: () => moveTo(context, Animation3D()),
             ),
           ],
         ),
