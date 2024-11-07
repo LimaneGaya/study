@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -15,14 +14,14 @@ const double hp = pi / 2;
 
 class _AdvancedRotationState extends State<AdvancedRotation>
     with TickerProviderStateMixin {
-  late AnimationController rotCont =
-      AnimationController(vsync: this, duration: t)
-        ..addStatusListener(startFlipAnim)
-        ..forward();
+  late AnimationController rotCont = AnimationController(
+      animationBehavior: AnimationBehavior.preserve, vsync: this, duration: t)
+    ..addStatusListener(startFlipAnim)
+    ..forward();
 
-  late AnimationController flipCont =
-      AnimationController(vsync: this, duration: t)
-        ..addStatusListener(startRotAnim);
+  late AnimationController flipCont = AnimationController(
+      animationBehavior: AnimationBehavior.preserve, vsync: this, duration: t)
+    ..addStatusListener(startRotAnim);
 
   late Animation<double> rotAnim = Tween<double>(begin: 0, end: -hp).animate(
     CurvedAnimation(parent: rotCont, curve: Curves.bounceOut),
@@ -33,31 +32,24 @@ class _AdvancedRotationState extends State<AdvancedRotation>
 
   void startFlipAnim(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
-    Future.delayed(
-      Duration(seconds: 1),
-      () {
-        final v = flipAnim.value;
-        flipAnim = Tween<double>(begin: v, end: v + pi).animate(
-          CurvedAnimation(parent: flipCont, curve: Curves.bounceOut),
-        );
-        flipCont
-          ..reset()
-          ..forward();
-      },
+    final v = flipAnim.value;
+    flipAnim = Tween<double>(begin: v, end: v + pi).animate(
+      CurvedAnimation(parent: flipCont, curve: Curves.bounceOut),
     );
+    flipCont
+      ..reset()
+      ..forward();
   }
 
   void startRotAnim(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
-    Future.delayed(Duration(seconds: 1), () {
-      final v = rotAnim.value;
-      rotAnim = Tween<double>(begin: v, end: v - pi / 2).animate(
-        CurvedAnimation(parent: rotCont, curve: Curves.bounceOut),
-      );
-      rotCont
-        ..reset()
-        ..forward();
-    });
+    final v = rotAnim.value;
+    rotAnim = Tween<double>(begin: v, end: v - pi / 2).animate(
+      CurvedAnimation(parent: rotCont, curve: Curves.bounceOut),
+    );
+    rotCont
+      ..reset()
+      ..forward();
   }
 
   @override

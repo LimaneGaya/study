@@ -13,19 +13,20 @@ const double d = 100;
 
 class _Animation3DState extends State<Animation3D>
     with TickerProviderStateMixin {
-  late final AnimationController _xCont;
-  late final AnimationController _yCont;
-  late final AnimationController _zCont;
+  late final AnimationController _xCont = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 40),
+      animationBehavior: AnimationBehavior.preserve);
+  late final AnimationController _yCont = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 50),
+      animationBehavior: AnimationBehavior.preserve);
+  late final AnimationController _zCont = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 60),
+      animationBehavior: AnimationBehavior.preserve);
 
   final Tween<double> anim = Tween<double>(begin: 0, end: pi * 2);
-
-  @override
-  void initState() {
-    super.initState();
-    _xCont = AnimationController(vsync: this, duration: Duration(seconds: 40));
-    _yCont = AnimationController(vsync: this, duration: Duration(seconds: 50));
-    _zCont = AnimationController(vsync: this, duration: Duration(seconds: 60));
-  }
 
   @override
   void dispose() {
@@ -37,15 +38,18 @@ class _Animation3DState extends State<Animation3D>
 
   @override
   Widget build(BuildContext context) {
-    _xCont
-      ..reset()
-      ..forward();
-    _yCont
-      ..reset()
-      ..forward();
-    _zCont
-      ..reset()
-      ..forward();
+    Future.delayed(Duration(seconds: 2), () {
+      _xCont
+        ..reset()
+        ..forward();
+      _yCont
+        ..reset()
+        ..forward();
+      _zCont
+        ..reset()
+        ..forward();
+    });
+
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -67,7 +71,7 @@ class _Animation3DState extends State<Animation3D>
               children: [
                 Container(color: Colors.red, height: d, width: d),
                 Transform(
-                  transform: Matrix4.identity()..translate(0, 0, d),
+                  transform: Matrix4.translationValues(0, 0, d),
                   alignment: Alignment.center,
                   child: Container(color: Colors.green, height: d, width: d),
                 ),
