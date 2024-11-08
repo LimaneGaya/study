@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animation/3%20-%203D%20animation/animation3d.dart';
 
 import '1 - simple rotation animation/rotation.dart';
 import '2 - chained animations/rotation.dart';
+import '3 - 3D animation/animation3d.dart';
+import '4 - hero animation/heroanimation.dart';
 
 void main() => runApp(const MainApp());
 
@@ -12,8 +13,10 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData.dark(),
-      home: App(),
+      themeMode: ThemeMode.system,
+      darkTheme: ThemeData.dark(),
+      theme: ThemeData.light(),
+      home: App()
     );
   }
 }
@@ -41,6 +44,10 @@ class App extends StatelessWidget {
             ListTile(
               title: Text("3 - 3D Animation"),
               onTap: () => moveTo(context, Animation3D()),
+            ),
+            ListTile(
+              title: Text("4 - Hero Animation"),
+              onTap: () => moveTo(context, HeroAnimation()),
             ),
           ],
         ),
