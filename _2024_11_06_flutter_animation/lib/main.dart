@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animation/5%20-%20implicit%20animations/implicit.dart';
 
 import '1 - simple rotation animation/rotation.dart';
 import '2 - chained animations/rotation.dart';
@@ -48,6 +49,10 @@ class App extends StatelessWidget {
             ListTile(
               title: Text("4 - Hero Animation"),
               onTap: () => moveTo(context, HeroAnimation()),
+            ),
+            ListTile(
+              title: Text("5 - Implicit Animation"),
+              onTap: () => moveTo(context, ImplicitAnimation()),
             ),
           ],
         ),
