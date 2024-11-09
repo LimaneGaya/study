@@ -5,6 +5,7 @@ import '1 - simple rotation animation/rotation.dart';
 import '2 - chained animations/rotation.dart';
 import '3 - 3D animation/animation3d.dart';
 import '4 - hero animation/heroanimation.dart';
+import '6 - tween animation builder/tween_animation.dart';
 
 void main() => runApp(const MainApp());
 
@@ -14,11 +15,10 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      themeMode: ThemeMode.system,
-      darkTheme: ThemeData.dark(),
-      theme: ThemeData.light(),
-      home: App()
-    );
+        themeMode: ThemeMode.system,
+        darkTheme: ThemeData.dark(),
+        theme: ThemeData.light(),
+        home: App());
   }
 }
 
@@ -53,6 +53,10 @@ class App extends StatelessWidget {
             ListTile(
               title: Text("5 - Implicit Animation"),
               onTap: () => moveTo(context, ImplicitAnimation()),
+            ),
+            ListTile(
+              title: Text("6 - Tween Animation Builder"),
+              onTap: () => moveTo(context, TweenAnimation()),
             ),
           ],
         ),
