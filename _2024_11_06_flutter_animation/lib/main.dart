@@ -6,6 +6,7 @@ import '2 - chained animations/rotation.dart';
 import '3 - 3D animation/animation3d.dart';
 import '4 - hero animation/heroanimation.dart';
 import '6 - tween animation builder/tween_animation.dart';
+import '7 - custom painter and animation/custom_painter.dart';
 
 void main() => runApp(const MainApp());
 
@@ -57,6 +58,10 @@ class App extends StatelessWidget {
             ListTile(
               title: Text("6 - Tween Animation Builder"),
               onTap: () => moveTo(context, TweenAnimation()),
+            ),
+            ListTile(
+              title: Text("7 - Custom Painter Animation"),
+              onTap: () => moveTo(context, CustomPainterScreen()),
             ),
           ],
         ),
