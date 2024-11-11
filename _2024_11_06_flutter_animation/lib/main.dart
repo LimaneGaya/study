@@ -7,6 +7,7 @@ import '3 - 3D animation/animation3d.dart';
 import '4 - hero animation/heroanimation.dart';
 import '6 - tween animation builder/tween_animation.dart';
 import '7 - custom painter and animation/custom_painter.dart';
+import '8 - 3d drawer/drawer.dart';
 
 void main() => runApp(const MainApp());
 
@@ -62,6 +63,10 @@ class App extends StatelessWidget {
             ListTile(
               title: Text("7 - Custom Painter Animation"),
               onTap: () => moveTo(context, CustomPainterScreen()),
+            ),
+            ListTile(
+              title: Text("8 - 3D Drawer"),
+              onTap: () => moveTo(context, Drawer3D()),
             ),
           ],
         ),
