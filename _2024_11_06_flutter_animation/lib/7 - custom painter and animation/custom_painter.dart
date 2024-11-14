@@ -65,6 +65,7 @@ class _CustomPainterScreenState extends State<CustomPainterScreen> with STPSM {
           ),
         ),
       ),
+      floatingActionButton: BackButton(),
     );
   }
 }

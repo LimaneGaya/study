@@ -100,6 +100,7 @@ class _Animation3DState extends State<Animation3D>
           )
         ],
       ),
+      floatingActionButton: BackButton(),
     );
   }
 }

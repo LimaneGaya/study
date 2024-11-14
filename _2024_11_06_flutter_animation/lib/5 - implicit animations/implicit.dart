@@ -33,6 +33,7 @@ class _ImplicitAnimationState extends State<ImplicitAnimation> {
           ),
         ],
       ),
+      floatingActionButton: BackButton(),
     );
   }
 }

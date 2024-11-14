@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' show pi;
 
-
 class Drawer3D extends StatelessWidget {
   const Drawer3D({super.key});
 
@@ -22,7 +21,15 @@ class Drawer3D extends StatelessWidget {
       ),
       child: Scaffold(
         appBar: AppBar(title: const Text('Drawer')),
-        body: Container(color: Colors.blueGrey.shade900),
+        body: Container(
+          color: Colors.blueGrey.shade900,
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [Text("Drag towards  "), Icon(Icons.arrow_forward)],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -41,12 +48,16 @@ const t = Duration(milliseconds: 500);
 
 class _MyDrawerState extends State<MyDrawer> with TickerProviderStateMixin {
   late final _contChild = AnimationController(vsync: this, duration: t);
-  late final _animChild =
-      Tween<double>(begin: 0, end: -pi / 2).animate(_contChild);
+  late final _animChild = Tween<double>(
+    begin: 0,
+    end: -pi / 2,
+  ).animate(_contChild);
 
   late final _contDrawer = AnimationController(vsync: this, duration: t);
-  late final _animDrawer =
-      Tween<double>(begin: pi / 2.7, end: 0).animate(_contDrawer);
+  late final _animDrawer = Tween<double>(
+    begin: pi / 3,
+    end: 0,
+  ).animate(_contDrawer);
 
   @override
   void dispose() {
@@ -80,21 +91,25 @@ class _MyDrawerState extends State<MyDrawer> with TickerProviderStateMixin {
         builder: (context, child) {
           return Stack(
             children: [
-              Container(color: Colors.blueGrey.shade800),
+              Container(color: Colors.brown.shade800),
               Transform(
                 alignment: Alignment.centerLeft,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001)
-                  ..translate(_contChild.value * maxDrag)
-                  ..rotateY(_animChild.value),
+                transform:
+                    Matrix4.identity()
+                      ..setEntry(3, 2, 0.001)
+                      ..translate(_contChild.value * maxDrag)
+                      ..rotateY(_animChild.value),
                 child: widget.child,
               ),
               Transform(
                 alignment: Alignment.centerRight,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001)
-                  ..translate(-screenWidth * 0.8 + _contDrawer.value * maxDrag)
-                  ..rotateY(_animDrawer.value),
+                transform:
+                    Matrix4.identity()
+                      ..setEntry(3, 2, 0.001)
+                      ..translate(
+                        -screenWidth * 0.8 + _contDrawer.value * maxDrag,
+                      )
+                      ..rotateY(_animDrawer.value),
                 child: widget.drawer,
               ),
             ],

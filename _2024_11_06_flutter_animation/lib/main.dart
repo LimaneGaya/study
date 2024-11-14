@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animation/5%20-%20implicit%20animations/implicit.dart';
 
 import '1 - simple rotation animation/rotation.dart';
 import '2 - chained animations/rotation.dart';
 import '3 - 3D animation/animation3d.dart';
 import '4 - hero animation/heroanimation.dart';
+import '5 - implicit animations/implicit.dart';
 import '6 - tween animation builder/tween_animation.dart';
 import '7 - custom painter and animation/custom_painter.dart';
 import '8 - 3d drawer/drawer.dart';
+import '9 - animated prompt/animated_prompt.dart';
 
 void main() => runApp(const MainApp());
 
@@ -67,6 +68,10 @@ class App extends StatelessWidget {
             ListTile(
               title: Text("8 - 3D Drawer"),
               onTap: () => moveTo(context, Drawer3D()),
+            ),
+            ListTile(
+              title: Text("9 - Animated Prompt"),
+              onTap: () => moveTo(context, AnimatedPrompt()),
             ),
           ],
         ),

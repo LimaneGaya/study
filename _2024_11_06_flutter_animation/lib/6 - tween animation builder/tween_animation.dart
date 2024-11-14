@@ -29,6 +29,7 @@ class _TweenAnimationState extends State<TweenAnimation> {
           ),
         ),
       ),
+      floatingActionButton: BackButton(),
     );
   }
 }
