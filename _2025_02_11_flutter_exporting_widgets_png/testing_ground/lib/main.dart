@@ -50,10 +50,13 @@ class _PrintWidgetState extends State<PrintWidget> {
             color: Colors.green,
             child: Center(
               child: AnimatedContainer(
-                duration: Duration(seconds: 1),
-                color: Colors.red,
+                duration: Duration(seconds: 10),
                 width: _isBig ? 200 : 100,
                 height: _isBig ? 200 : 100,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(_isBig ? 60 : 30),
+                ),
               ),
             ),
           ),
@@ -66,3 +69,4 @@ class _PrintWidgetState extends State<PrintWidget> {
     );
   }
 }
+
